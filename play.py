@@ -66,7 +66,7 @@ print("Loaded model from disk")
 #plot_model(loaded_model)
 
 
-g = game.game(random = True)
+g = game.game(random = False)
 g.print_matrix()
 
 state = 'not over'

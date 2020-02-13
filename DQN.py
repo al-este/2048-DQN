@@ -59,8 +59,6 @@ def create_model_1():
 	return model
 
 def create_model_2():
-	def CBGN(model,filters,ishape=0):
-
 	model = Sequential()
 	model.add(Conv2D(32, (3, 3), padding='same',
 		             input_shape=(4, 4, 12)))
@@ -331,8 +329,8 @@ def load_model(model):
 
 	return model
 
-model = create_model_3()
-freezed_model = create_model_3()
+model = create_model_2()
+freezed_model = create_model_2()
 
 opt = Adam(lr=0.001)
 
@@ -357,7 +355,7 @@ while True:
 	if it > 10:
 		it = 0
 		if len(gset) < 500:
-			gset.append(new_game_set(10))
+			gset.extend(new_game_set(10))
 		else:
 			gset = new_game_set(10)
 		save_model(model)

@@ -96,10 +96,6 @@ def new_game_set(size):
 def train(iteration, g_set):
 	game_set = random_game_set()
 	game_set1 = random1_game_set()
-	aa=list()
-	ss=list()
-	dd=list()
-	ww=list()
 	q_set = list()
 	state_set = list()
 	def create_set(i, games):
@@ -108,15 +104,6 @@ def train(iteration, g_set):
 				a = randint(0, 3)
 			else:
 				a = np.argmax(pre)
-
-			if a == 3:
-				aa.append(0)
-			elif a == 2:
-				ss.append(0)
-			elif a == 1:
-				dd.append(0)
-			elif a == 0:
-				ww.append(0)
 
 			state = games[i].get_matrix()
 			state_set.append(image.img_to_array(state))
@@ -146,7 +133,7 @@ def train(iteration, g_set):
 		if g_set[i].get_state() != 'not over':
 			g_set[i] = game.game(False, False)
 		create_set(i, g_set)
-	print("a:{}, s:{}, d:{}, w:{}".format(len(aa),len(ss),len(dd),len(ww)))
+
 	res = model.fit(np.array(state_set), np.array(q_set), epochs = 1, batch_size = 10, verbose=1)
 	history.append(res.history['loss'])
 

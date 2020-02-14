@@ -75,9 +75,8 @@ while state == 'not over':
 	predict = loaded_model.predict(matrix_to_array(g.get_matrix()))
 	a = get_movement(predict)
 	r = g.movement(a)
-	if r != 0:
-		g.print_matrix(False)
-		print(a)
-		print(predict)
-	sleep(0.1)
+	g.print_matrix(True)
+	print(a)
+	print(predict)
+	sleep(0.5)
 	state = g.get_state()

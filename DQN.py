@@ -16,7 +16,7 @@ from random import choices, choice, randint
 from math import log
 import matplotlib.pyplot as plt
 
-N_SET = 1000
+N_SET = 500
 
 DELTA = 0.9
 eps = 0.25
@@ -111,7 +111,10 @@ def train(iteration, g_set):
 			r = games[i].movement(get_movement(a))
 
 			if r == 0:
-				r = -0.05
+				if state==games[i].get_matrix():
+					r = -0.2
+				else:
+					r = 0
 			else:
 				r = log(r, 2)/11.0
 
@@ -134,7 +137,7 @@ def train(iteration, g_set):
 			g_set[i] = game.game(False, False)
 		create_set(i, g_set)
 
-	res = model.fit(np.array(state_set), np.array(q_set), epochs = 1, batch_size = 10, verbose=1)
+	res = model.fit(np.array(state_set), np.array(q_set), epochs = 5, batch_size = 10, verbose=1)
 	history.append(res.history['loss'])
 
 	#print(np.array(state_set))
@@ -178,7 +181,7 @@ try:
 		it += 1
 		if it > 10:
 			it = 0
-			if len(gset) < 500:
+			if len(gset) < 1000:
 				gset.extend(new_game_set(10))
 			else:
 				gset = new_game_set(10)

@@ -11,7 +11,7 @@ from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D
 from keras.preprocessing import image
 from keras.optimizers import Adam
 
-from random import choices, choice
+from random import choices, choice, randint
 
 from math import log
 import matplotlib.pyplot as plt
@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 N_SET = 1000
 
 DELTA = 0.9
+eps = 0.25
 
 def create_model():
 	model = Sequential()
@@ -39,7 +40,7 @@ def create_model():
 	model.add(Dense(256))
 	model.add(Activation('relu'))
 
-	model.add(Dense(128))
+	model.add(Dense(256))
 	model.add(Activation('relu'))
 
 	model.add(Dense(4))
@@ -56,12 +57,11 @@ def matrix_to_array(matrix):
 	return np.expand_dims(image.img_to_array(matrix),axis=0)
 
 def get_movement(predict):
-	i = np.argmax(predict)
-	if i == 0:
+	if predict == 0:
 		return 'w'
-	elif i == 1:
+	elif predict == 1:
 		return 'd'
-	elif i == 2:
+	elif predict == 2:
 		return 's'
 	else:
 		return 'a'
@@ -96,17 +96,32 @@ def new_game_set(size):
 def train(iteration, g_set):
 	game_set = random_game_set()
 	game_set1 = random1_game_set()
-	
+	aa=list()
+	ss=list()
+	dd=list()
+	ww=list()
 	q_set = list()
 	state_set = list()
 	def create_set(i, games):
 			pre = model.predict(matrix_to_array(games[i].get_matrix()))
-			a = get_movement(pre)
+			if np.random.random() < eps:
+				a = randint(0, 3)
+			else:
+				a = np.argmax(pre)
+
+			if a == 3:
+				aa.append(0)
+			elif a == 2:
+				ss.append(0)
+			elif a == 1:
+				dd.append(0)
+			elif a == 0:
+				ww.append(0)
 
 			state = games[i].get_matrix()
 			state_set.append(image.img_to_array(state))
 
-			r = games[i].movement(a)
+			r = games[i].movement(get_movement(a))
 
 			if r == 0:
 				r = -0.05
@@ -118,7 +133,7 @@ def train(iteration, g_set):
 			target = r + DELTA*max(predict[0])
 
 			q = pre[0]
-			q[np.argmax(predict)] = target
+			q[a] = target
 			q_set.append(q)
 
 	for i in range(N_SET):
@@ -131,7 +146,7 @@ def train(iteration, g_set):
 		if g_set[i].get_state() != 'not over':
 			g_set[i] = game.game(False, False)
 		create_set(i, g_set)
-
+	print("a:{}, s:{}, d:{}, w:{}".format(len(aa),len(ss),len(dd),len(ww)))
 	res = model.fit(np.array(state_set), np.array(q_set), epochs = 1, batch_size = 10, verbose=1)
 	history.append(res.history['loss'])
 
@@ -183,10 +198,11 @@ try:
 			save_model(model)
 
 		predict = model.predict(matrix_to_array(g.get_matrix()))
-		a = get_movement(predict)
+		a = get_movement(np.argmax(predict))
 		g.movement(a)
 		g.print_matrix(False)
 		print(a)
+		print("Epoch " + str(len(history)))
 		print(model.predict(matrix_to_array(g.get_matrix())))
 
 		if g.get_state() != 'not over':

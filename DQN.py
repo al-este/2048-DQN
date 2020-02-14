@@ -154,10 +154,9 @@ freezed_model = create_model()
 
 opt = Adam(lr=0.001)
 
-model.compile(loss='mean_squared_error')
+model.compile(loss='mean_squared_error', optimizer=opt)
 
-freezed_model.compile(loss='mean_squared_error',
-              optimizer=opt)
+freezed_model.compile(loss='mean_squared_error', optimizer=opt)
 
 #model = load_model(model)
 

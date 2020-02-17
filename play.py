@@ -72,11 +72,17 @@ g.print_matrix()
 state = 'not over'
 
 while state == 'not over':
-	predict = loaded_model.predict(matrix_to_array(g.get_matrix()))
+	predict = loaded_model.predict(matrix_to_array(g.get_matrix()))[0]
+	state = g.get_matrix()
 	a = get_movement(predict)
-	r = g.movement(a)
+	g.movement(a)
+	#for i in range(3):
+	#	if g.get_matrix() == state:
+	#		predict[np.argmax(predict)] = -1000
+	#		g.movement(get_movement(predict))
 	g.print_matrix(True)
 	print(a)
 	print(predict)
-	sleep(0.5)
+	print(g.get_score())
+	#sleep(0.1)
 	state = g.get_state()

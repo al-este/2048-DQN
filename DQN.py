@@ -16,10 +16,10 @@ from random import choices, choice, randint
 from math import log
 import matplotlib.pyplot as plt
 
-N_SET = 500
+N_SET = 250
 
 DELTA = 0.9
-eps = 0.25
+eps = 0.2
 
 def create_model():
 	model = Sequential()
@@ -98,27 +98,27 @@ def train(iteration, g_set):
 	game_set1 = random1_game_set()
 	q_set = list()
 	state_set = list()
-	def create_set(i, games):
-			pre = model.predict(matrix_to_array(games[i].get_matrix()))
+	def create_set(game):
+			pre = model.predict(matrix_to_array(game.get_matrix()))
 			if np.random.random() < eps:
 				a = randint(0, 3)
 			else:
 				a = np.argmax(pre)
 
-			state = games[i].get_matrix()
+			state = game.get_matrix()
 			state_set.append(image.img_to_array(state))
 
-			r = games[i].movement(get_movement(a))
+			r = game.movement(get_movement(a))
 
 			if r == 0:
-				if state==games[i].get_matrix():
-					r = -0.2
+				if state==game.get_matrix():
+					r = -0.07
 				else:
 					r = 0
 			else:
 				r = log(r, 2)/11.0
 
-			predict = freezed_model.predict(matrix_to_array(games[i].get_matrix()))
+			predict = freezed_model.predict(matrix_to_array(game.get_matrix()))
 
 			target = r + DELTA*max(predict[0])
 
@@ -126,19 +126,32 @@ def train(iteration, g_set):
 			q[a] = target
 			q_set.append(q)
 
-	for i in range(N_SET):
-		create_set(i, game_set)
+	for g in game_set:
+		create_set(g)
 
-	for i in range(int(N_SET/2)):
-		create_set(i, game_set1)
+	for g in game_set1:
+		create_set(g)
 
-	for i in range(len(g_set)):
-		if g_set[i].get_state() != 'not over':
-			g_set[i] = game.game(False, False)
-		create_set(i, g_set)
+	mean_score = 0
+	for g in g_set:
+		loses = 0
+		while True:
+			if g.get_state() == 'not over':
+				state = g.get_matrix()
+				create_set(g)
+				if state == g.get_matrix():
+					loses += 1
+					if loses >= 10:
+						break
+				else:
+					loses = 0
+			else:
+				break
+		mean_score += g.get_score()
+	score.append(mean_score/len(g_set))
 
 	res = model.fit(np.array(state_set), np.array(q_set), epochs = 5, batch_size = 10, verbose=1)
-	history.append(res.history['loss'])
+	history.append(res.history['loss'][0])
 
 	#print(np.array(state_set))
 	#print(np.array(q_set))
@@ -163,28 +176,25 @@ model.compile(loss='mean_squared_error', optimizer=opt)
 
 freezed_model.compile(loss='mean_squared_error', optimizer=opt)
 
-#model = load_model(model)
+model = load_model(model)
 
 copy_model(model, freezed_model)
 
 global historial
 
 history = list()
+score = list()
 
 g = game.game()
 it = 0
-gset = new_game_set(10)
 try:
 	while True:
+		gset = new_game_set(100)
 		train(it, gset)
 
 		it += 1
 		if it > 10:
 			it = 0
-			if len(gset) < 1000:
-				gset.extend(new_game_set(10))
-			else:
-				gset = new_game_set(10)
 			save_model(model)
 
 		predict = model.predict(matrix_to_array(g.get_matrix()))
@@ -198,8 +208,20 @@ try:
 		if g.get_state() != 'not over':
 			g = game.game()
 except KeyboardInterrupt:
-	plt.plot(history)
-	plt.title('Model loss')
-	plt.ylabel('Loss')
-	plt.xlabel('Epoch')
+	fig, ax1 = plt.subplots()
+
+	color = 'tab:red'
+	ax1.set_xlabel('Epochs')
+	ax1.set_ylabel('Loss', color=color)
+	ax1.plot(history, color=color)
+	ax1.tick_params(axis='y', labelcolor=color)
+
+	ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+	color = 'tab:blue'
+	ax2.set_ylabel('Score', color=color)  # we already handled the x-label with ax1
+	ax2.plot(score, color=color)
+	ax2.tick_params(axis='y', labelcolor=color)
+
+	fig.tight_layout()  # otherwise the right y-label is slightly clipped
 	plt.show()

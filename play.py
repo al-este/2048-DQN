@@ -76,10 +76,14 @@ while state == 'not over':
 	state = g.get_matrix()
 	a = get_movement(predict)
 	g.movement(a)
-	#for i in range(3):
-	#	if g.get_matrix() == state:
-	#		predict[np.argmax(predict)] = -1000
-	#		g.movement(get_movement(predict))
+	if True:
+		for i in range(3):
+			if g.get_matrix() == state:
+				predict[np.argmax(predict)] = -1000
+				g.movement(get_movement(predict))
+	else:
+		if g.get_matrix() == state:
+			break
 	g.print_matrix(True)
 	print(a)
 	print(predict)

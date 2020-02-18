@@ -16,10 +16,10 @@ from random import choices, choice, randint
 from math import log
 import matplotlib.pyplot as plt
 
-N_SET = 250
+N_SET = 0
 
 DELTA = 0.9
-eps = 0.2
+eps = 0
 
 def create_model():
 	model = Sequential()
@@ -77,20 +77,20 @@ def save_model(s_model):
 def random_game_set():
 	gset = list()
 	for i in range(N_SET):
-		gset.append(game.game(False, True))
+		gset.append(game.game(True))
 	return gset
 
 def random1_game_set():
 	gset = list()
 	for i in range(int(N_SET/2)):
-		gset.append(game.game(False, True))
+		gset.append(game.game(True))
 		gset[i].create_random1()
 	return gset
 
 def new_game_set(size):
 	gset = list()
 	for i in range(size):
-		gset.append(game.game(False, False))
+		gset.append(game.game(False))
 	return gset
 
 def train(iteration, g_set):
@@ -176,7 +176,7 @@ model.compile(loss='mean_squared_error', optimizer=opt)
 
 freezed_model.compile(loss='mean_squared_error', optimizer=opt)
 
-model = load_model(model)
+#model = load_model(model)
 
 copy_model(model, freezed_model)
 
@@ -189,11 +189,11 @@ g = game.game()
 it = 0
 try:
 	while True:
-		gset = new_game_set(100)
+		gset = new_game_set(10)
 		train(it, gset)
 
 		it += 1
-		if it > 10:
+		if it >= 10:
 			it = 0
 			save_model(model)
 

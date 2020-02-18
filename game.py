@@ -2,11 +2,10 @@ import logic
 import constants as c
 from os import system, name
 from math import log
-from tkinter import Frame, Label, CENTER
 from random import choices, choice, randint
 
-class game(Frame):
-	def __init__(self, visualize = False, random = False):
+class game():
+	def __init__(self, random = False):
 		self.matrix = logic.new_game(4)
 		self.matrix = logic.add_two(self.matrix)
 		self.matrix = logic.add_two(self.matrix)
@@ -17,14 +16,6 @@ class game(Frame):
 		self.state = 'not over'
 
 		self.score = 0
-
-		self.visualize = visualize
-		if visualize:
-			Frame.__init__(self)
-			self.grid()
-			self.grid_cells = []
-			self.init_grid()
-			self.update_grid()
 
 	def create_random1(self):
 		nums = (0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024)
@@ -46,40 +37,6 @@ class game(Frame):
 			num = choice(nums)
 			self.matrix = logic.add_num(self.matrix, num)
 			self.matrix = logic.add_num(self.matrix, num)
-
-
-	def init_grid(self):
-		background = Frame(self, bg=c.BACKGROUND_COLOR_GAME, width=c.SIZE, height=c.SIZE)
-		background.grid()
-
-		for i in range(c.GRID_LEN):
-			grid_row = []
-			for j in range(c.GRID_LEN):
-				cell = Frame(background, bg=c.BACKGROUND_COLOR_CELL_EMPTY,
-                             width=c.SIZE / c.GRID_LEN,
-                             height=c.SIZE / c.GRID_LEN)
-				cell.grid(row=i, column=j, padx=c.GRID_PADDING,
-                          pady=c.GRID_PADDING)
-				t = Label(master=cell, text="",
-                          bg=c.BACKGROUND_COLOR_CELL_EMPTY,
-                          justify=CENTER, font=c.FONT, width=5, height=2)
-				t.grid()
-				grid_row.append(t)
-
-			self.grid_cells.append(grid_row)
-
-	def update_grid(self):
-		for i in range(c.GRID_LEN):
-			for j in range(c.GRID_LEN):
-				new_number = self.matrix[i][j]
-				if new_number == 0:
-					self.grid_cells[i][j].configure(
-						text="", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
-				else:
-					self.grid_cells[i][j].configure(text=str(
-						new_number), bg=c.BACKGROUND_COLOR_DICT[new_number],
-						fg=c.CELL_COLOR_DICT[new_number])
-		self.update_idletasks()
 
 	def print_matrix(self, clear = True):
 		if clear:
@@ -150,10 +107,4 @@ class game(Frame):
 		if done and self.state == 'not over':
 			self.matrix = logic.add_two(self.matrix)
 
-		if self.visualize:
-			self.update_grid()
-
 		return points
-
-	def normalice_points(points):
-		return points/2048.0

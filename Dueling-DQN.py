@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 
 N_SET = 0
 
-DELTA = 0.9
-eps = 0.3
+DELTA = 0.95
+eps = 0.15
 
 def create_model_DDQN():
 	model = Sequential()
@@ -104,91 +104,88 @@ def save_model(s_model):
 	s_model.save_weights("model.h5")
 	print("Saved model to disk")
 
-def random_game_set():
-	gset = list()
-	for i in range(N_SET):
-		gset.append(game.game(False, True))
-	return gset
-
-def random1_game_set():
-	gset = list()
-	for i in range(int(N_SET/2)):
-		gset.append(game.game(False, True))
-		gset[i].create_random1()
-	return gset
-
 def new_game_set(size):
 	gset = list()
 	for i in range(size):
-		gset.append(game.game(False, False))
+		gset.append(game.game(False))
 	return gset
 
-def train(iteration, g_set):
-	game_set = random_game_set()
-	game_set1 = random1_game_set()
-	q_set = list()
+def train(g_set):
 	state_set = list()
-	def create_set(game):
-			pre = model.predict(matrix_to_array(game.get_matrix()))
-			if np.random.random() < eps:
-				a = randint(0, 3)
+	a_set = list()
+	pre_set = list()
+	post_set = list()
+	r_set = list()
+	def create_set(game, epsilon):
+		pre = model.predict(matrix_to_array(game.get_matrix()))
+		if np.random.random() < epsilon:
+			a = randint(0, 3)
+		else:
+			a = np.argmax(pre)
+
+		pre_set.append(pre[0])
+		a_set.append(a)
+		state = game.get_matrix()
+		state_set.append(image.img_to_array(state))
+
+		r = game.movement(get_movement(a))
+
+		if r == 0:
+			if state==game.get_matrix():
+				r = -0.1
 			else:
-				a = np.argmax(pre)
+				r = 0
+		else:
+			r = log(r, 2)/11.0
 
-			state = game.get_matrix()
-			state_set.append(image.img_to_array(state))
+		r_set.append(r)
 
-			r = game.movement(get_movement(a))
-
-			if r == 0:
-				if state==game.get_matrix():
-					r = -0.07
-				else:
-					r = 0
-			else:
-				r = log(r, 2)/11.0
-
-			predict = freezed_model.predict(matrix_to_array(game.get_matrix()))
-
-			target = r + DELTA*max(predict[0])
-
-			q = pre[0]
-			q[a] = target
-			q_set.append(q)
-
-	for g in game_set:
-		create_set(g)
-
-	for g in game_set1:
-		create_set(g)
+		post_set.append(game.get_matrix())
 
 	mean_score = 0
+	scores=list()
+	i_set=list()
+	i=0
 	for g in g_set:
 		loses = 0
 		while True:
 			if g.get_state() == 'not over':
 				state = g.get_matrix()
-				create_set(g)
+				create_set(g, loses/100.0)
+				i_set.append(i)
 				if state == g.get_matrix():
 					loses += 1
-					if loses >= 10:
+					if loses >= 50:
 						break
 				else:
 					loses = 0
 			else:
 				break
+		i+=1
+		scores.append(g.get_score())
 		mean_score += g.get_score()
+		g.print_matrix(False)
+		print(i)
+
+	max_score = max(scores)
+	print(scores)
+	print("{} -> {}".format(max_score, np.argmax(scores)+1))
+	max_score_history.append(max_score)
+
+	predicts = freezed_model.predict(np.array(post_set))
+
+	r_set = np.array(r_set)*(np.array(scores)[np.array(i_set)]/max_score)
+
+	targets = r_set + DELTA*np.max(np.array(predicts), axis=1)
+
+	pre_set = np.array(pre_set)
+
+	pre_set[range(len(pre_set)), a_set] = targets
+	print(mean_score/len(g_set)+1)
 	score.append(mean_score/len(g_set))
 
-	res = model.fit(np.array(state_set), np.array(q_set), epochs = 5, batch_size = 10, verbose=1)
+	res = model.fit(np.array(state_set), np.array(pre_set), epochs = 5, batch_size = 100, verbose=1)
 	history.append(res.history['loss'][0])
-
-	#print(np.array(state_set))
-	#print(np.array(q_set))
-
-	if iteration == 0:
-		copy_model(model, freezed_model)
-		print('model -> freezed_model')
 
 def load_model(model):
 	model.load_weights("model.h5")
@@ -208,47 +205,49 @@ model.compile(loss='mean_squared_error', optimizer=opt)
 
 copy_model(model, freezed_model)
 
-global historial
-
 history = list()
 score = list()
+max_score_history=list()
 
 g = game.game()
 it = 0
 try:
 	while True:
 		gset = new_game_set(10)
-		train(it, gset)
+		train(gset)
 
 		it += 1
-		if it > 10:
+		if it >= 5:
 			it = 0
+			copy_model(model, freezed_model)
+			print('model -> freezed_model')
 			save_model(model)
 
 		predict = model.predict(matrix_to_array(g.get_matrix()))
 		a = get_movement(np.argmax(predict))
 		g.movement(a)
-		g.print_matrix(False)
-		print(a)
+		#g.print_matrix(False)
+		#print(a)
 		print("Epoch " + str(len(history)))
-		print(model.predict(matrix_to_array(g.get_matrix())))
+		#print(model.predict(matrix_to_array(g.get_matrix())))
 
 		if g.get_state() != 'not over':
 			g = game.game()
 except KeyboardInterrupt:
 	fig, ax1 = plt.subplots()
 
-	color = 'tab:red'
+	color = 'tab:blue'
 	ax1.set_xlabel('Epochs')
-	ax1.set_ylabel('Loss', color=color)
-	ax1.plot(history, color=color)
+	ax1.set_ylabel('Mean score', color=color)
+	ax1.plot(score, color=color)
 	ax1.tick_params(axis='y', labelcolor=color)
 
 	ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
-	color = 'tab:blue'
-	ax2.set_ylabel('Score', color=color)  # we already handled the x-label with ax1
-	ax2.plot(score, color=color)
+	color = 'tab:red'
+	ax2.set_ylabel('Max core', color=color)  # we already handled the x-label with ax1
+	
+	ax2.plot(max_score_history, color=color)
 	ax2.tick_params(axis='y', labelcolor=color)
 
 	fig.tight_layout()  # otherwise the right y-label is slightly clipped

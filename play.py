@@ -16,29 +16,6 @@ from keras.models import model_from_json
 from keras.applications.vgg16 import VGG16
 from matplotlib import pyplot
 
-def plot_model(model):
-	# retrieve weights from the second hidden layer
-	filters, biases = model.layers[4].get_weights()
-	# normalize filter values to 0-1 so we can visualize them
-	f_min, f_max = filters.min(), filters.max()
-	filters = (filters - f_min) / (f_max - f_min)
-	# plot first few filters
-	n_filters, ix = 8, 1
-	for i in range(n_filters):
-		# get the filter
-		f = filters[:, :, :, i]
-		# plot each channel separately
-		for j in range(4):
-			# specify subplot and turn of axis
-			ax = pyplot.subplot(n_filters, 4, ix)
-			ax.set_xticks([])
-			ax.set_yticks([])
-			# plot filter channel in grayscale
-			pyplot.imshow(f[:, :, j], cmap='gray')
-			ix += 1
-	# show the figure
-	pyplot.show()
-
 def matrix_to_array(matrix):
 	return np.expand_dims(image.img_to_array(matrix),axis=0)
 
@@ -62,9 +39,6 @@ loaded_model.load_weights("model.h5")
 print("Loaded model from disk")
 
 #loaded_model.summary()
-
-#plot_model(loaded_model)
-
 
 g = game.game(random = False)
 g.print_matrix()

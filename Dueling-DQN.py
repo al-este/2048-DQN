@@ -201,7 +201,7 @@ opt = Adam(lr=0.001)
 
 model.compile(loss='mean_squared_error', optimizer=opt)
 
-#model = load_model(model)
+model = load_model(model)
 
 copy_model(model, freezed_model)
 
